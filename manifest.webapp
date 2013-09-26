@@ -1,0 +1,28 @@
+{
+    "version": "1.0",
+    "name": "Radio Paradise",
+    "launch_path": "/index.html",
+    "description": "An unofficial app for radio paradise",
+    "type": "privileged",
+    "fullscreen": "false",
+    "icons": {
+        "48": "/img/rp_logo32.png",
+        "60": "/img/rp_logo60.png",
+        "64": "/img/rp_logo64.png",
+        "128": "/img/rp_logo128.png"
+    },
+    "developer": {
+        "name": "Aras Balali Moghaddam",
+        "url": "http://arasbm.com"
+    },
+    "permissions": {
+      "systemXHR": {
+        "description" : "Need to access current song info on radioparadise.com"
+      },
+      "audio-channel-content": {
+	"description" : "Continue to play music when app goes into background"
+      }
+    },
+    "installs_allowed_from": ["*"],
+    "default_locale": "en"
+}
