@@ -9,7 +9,11 @@
     <link rel="stylesheet" href="css/main.css">
   </head>
   <body>
-    <img id="cover"></img>
+    <div id="cover">
+      <div id="left-cover" class="cover-half"><canvas id="left-canvas"></canvas></div>
+      <div id="setting">settings</div>
+      <div id="right-cover" class="cover-half"><canvas id="right-canvas"></canvas></div>
+    </div>
     <div id="bottom-div">
       <div id="play-btn" class="playing">
         <img id="play-btn-img"></img>
@@ -17,6 +21,6 @@
       <p id="song-title"></p>
     </div>
     <div id="song-info-holder" class="hidden"></div>
-    <script type="text/javascript" src="js/rp.js"></script>
+    <script data-main="scripts/main.js" src="scripts/require.js"></script>
   </body>
 </html>
