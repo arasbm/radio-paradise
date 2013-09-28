@@ -1,4 +1,3 @@
-/*
 define(['helper/async_storage'], function(storage) {
   console.log('defining setting module, storage helper is' + storage);
 
@@ -13,4 +12,4 @@ define(['helper/async_storage'], function(storage) {
 
   return setting;
 });
-*/
+

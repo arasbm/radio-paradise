@@ -7,11 +7,14 @@
       <p>HTML5 audio is not supported by your browser</p>
     </audio>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/brick-1.0beta8.byob.min.css">
   </head>
   <body>
     <div id="cover">
       <div id="left-cover" class="cover-half"><canvas id="left-canvas"></canvas></div>
-      <div id="setting">settings</div>
+      <div id="setting">settings
+	<x-slider min="1" max="3" step="1" value="3">Stream quality</x-slider>
+      </div>
       <div id="right-cover" class="cover-half"><canvas id="right-canvas"></canvas></div>
     </div>
     <div id="bottom-div">
@@ -21,6 +24,6 @@
       <p id="song-title"></p>
     </div>
     <div id="song-info-holder" class="hidden"></div>
-    <script data-main="scripts/main.js" src="scripts/require.js"></script>
+    <script data-main="scripts/main" src="scripts/require.js"></script>
   </body>
 </html>

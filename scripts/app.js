@@ -1,6 +1,7 @@
 define(function(require) {
-(function() {
-  console.log('loaded setting module as ' + setting);
+  var setting = require('helper/setting');
+  //var brick = require('brick');
+  var brick = require('helper/brick-1.0beta8.byob.min');
 
   var audio = document.getElementById('audio');
   var btn = document.getElementById('play-btn');
@@ -19,11 +20,17 @@ define(function(require) {
   var state = 'playing';
   var setting_is_open = false;
 
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('loaded and lock is: ' + lock);
+  console.log('document ready? ' + document.readyState);
+  if (document.readyState == 'complete') {
+    init();
+  } else {
+    document.addEventListener('DOMContentLoaded', init);
+  }
+
+  function init() {
     audio.src = ogg_stream['192k'];
     get_current_songinfo();
-  });
+  }
 
   btn.addEventListener('click', pause_play, false);
   cover.addEventListener('click', cover_tapped, false);
@@ -131,5 +138,4 @@ define(function(require) {
     setting_is_open = false;
   }
 
-})();
 });
