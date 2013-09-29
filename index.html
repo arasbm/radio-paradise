@@ -6,14 +6,32 @@
     <audio id="audio" mozaudiochannel="content" preload>
       <p>HTML5 audio is not supported by your browser</p>
     </audio>
+    <link rel="stylesheet" href="css/brick.css">
     <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/brick-1.0beta8.byob.min.css">
   </head>
   <body>
     <div id="cover">
       <div id="left-cover" class="cover-half"><canvas id="left-canvas"></canvas></div>
-      <div id="setting">settings
-	<x-slider min="1" max="3" step="1" value="3">Stream quality</x-slider>
+      <div id="setting">
+        <x-layout>
+          <header>
+            Settings
+          </header>
+          <section>
+            <p>
+            Quality: 
+            <x-togglegroup name="quality" group="quality">
+              <x-toggle label="Low"></x-toggle>
+              <x-toggle label="Medium"></x-toggle>
+              <x-toggle label="High"></x-toggle>
+            </x-togglegroup>
+            </p>
+            <p>
+              <x-toggle checked label="Play music when app starts"></x-toggle>
+            </p>
+          </section>
+        </x-layout>
+
       </div>
       <div id="right-cover" class="cover-half"><canvas id="right-canvas"></canvas></div>
     </div>
@@ -24,6 +42,10 @@
       <p id="song-title"></p>
     </div>
     <div id="song-info-holder" class="hidden"></div>
-    <script data-main="scripts/main" src="scripts/require.js"></script>
+
+    <!--TODO: figure out why can not load brick with alameda -->
+    <script src="scripts/helper/brick.js"></script>
+
+    <script data-main="scripts/main" src="scripts/alameda.js"></script>
   </body>
 </html>

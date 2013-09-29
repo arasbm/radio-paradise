@@ -1,7 +1,7 @@
 define(function(require) {
   var setting = require('helper/setting');
   //var brick = require('brick');
-  var brick = require('helper/brick-1.0beta8.byob.min');
+  //var brick = require('helper/brick');
 
   var audio = document.getElementById('audio');
   var btn = document.getElementById('play-btn');

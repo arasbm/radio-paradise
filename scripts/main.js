@@ -4,7 +4,7 @@ require.config({
       'helper/async_storage': {
         exports: 'asyncStorage'
       },
-      'helper/brick-1.0beta8.byob.min': {
+      'helper/brick': {
         exports: 'brick'
       }
     }
