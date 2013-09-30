@@ -1,5 +1,6 @@
 define(function(require) {
   var setting = require('helper/setting');
+  var gesture = require('helper/gesture_detector');
   //var brick = require('brick');
   //var brick = require('helper/brick');
 
@@ -10,7 +11,14 @@ define(function(require) {
   var cover = document.getElementById('cover');
   var title_el = document.getElementById('song-title');
   var lock = window.navigator.requestWakeLock('screen');
-
+  var left_canvas = document.getElementById('left-canvas');
+  var right_canvas = document.getElementById('right-canvas');
+  var left_cover = document.getElementById('left-cover');
+  var right_cover = document.getElementById('right-cover');
+  var bottom = document.getElementById('bottom-div');
+  var last_pan_x = -1;
+  var width, height;
+  var next_song;
   var ogg_stream = {
     '32k': 'http://stream-dv1.radioparadise.com/ogg-192',
     '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
@@ -29,12 +37,57 @@ define(function(require) {
 
   function init() {
     audio.src = ogg_stream['192k'];
+    new GestureDetector(cover).startDetecting();
     get_current_songinfo();
   }
 
   btn.addEventListener('click', pause_play, false);
-  cover.addEventListener('click', cover_tapped, false);
+  //cover.addEventListener('click', cover_tapped, false);
+  //left_canvas.addEventListener('click', cover_tapped, false);
+  //right_canvas.addEventListener('click', cover_tapped, false);
   audio.addEventListener('loadedmetadata', loadedMetadata, false);
+  cover.addEventListener('pan', function(event) {
+    event.stopPropagation();
+    var position = event.detail.position;
+    if (last_pan_x == -1) {
+      last_pan_x = position.clientX;
+    } else {
+      var direction = (last_pan_x > width / 2) ?
+          position.clientX - last_pan_x : last_pan_x - position.clientX;
+      slide_setting_to(direction);
+    }
+  });
+
+  cover.addEventListener('swipe', function(event) {
+    var swipe_threshold = width / 10;
+    var to_right = event.detail.direction === 'right';
+    var distance = event.detail.dx;
+    var on_left = event.detail.start.clientX < width / 2;
+
+    if (Math.abs(distance) > swipe_threshold) {
+      // if swipe was on left side and toward right OR if it was on right
+      // side and toward left then close detail panel, otherwise open it
+      if (on_left != to_right) {
+        open_setting();
+      } else {
+        close_setting();
+      }
+    } else {
+      // not enough force to change, go back to current state
+      if (setting_is_open) {
+        open_setting();
+      } else {
+        close_setting();
+      }
+    }
+
+    event.stopPropagation();
+    last_pan_x = -1;
+  });
+
+  window.addEventListener('resize', function() {
+    update_info();
+  }, false);
 
   function loadedMetadata() {
     console.log('loaded metadata: ', this);
@@ -64,15 +117,16 @@ define(function(require) {
     crossxhr.onload = function() {
       var infoArray = crossxhr.responseText.split('|');
       song_info.innerHTML = infoArray[1];
-      setTimeout('get_current_songinfo()', infoArray[0]);
+      next_song = setInterval(get_current_songinfo, infoArray[0]);
       update_info();
     };
     crossxhr.onerror = function() {
       console.log('Error getting current song info', crossxhr);
-      setTimeout('get_current_singinfo()', 200000);
+      nex_song = setInterval(get_current_singinfo, 200000);
     };
     crossxhr.open('GET', playlist_url);
     crossxhr.send();
+    clearInterval(next_song);
   }
 
   function update_info() {
@@ -93,10 +147,8 @@ define(function(require) {
   }
 
   function draw(img_src) {
-    var left_canvas = document.getElementById('left-canvas');
-    var right_canvas = document.getElementById('right-canvas');
-    var width = cover.clientWidth;
-    var height = cover.clientHeight;
+    width = cover.clientWidth;
+    height = cover.clientHeight;
     draw_half(left_canvas, 'left');
     draw_half(right_canvas, 'right');
     function draw_half(canvas, side) {
@@ -104,13 +156,44 @@ define(function(require) {
       canvas.setAttribute('height', height);
       var ctx = canvas.getContext('2d');
       var img = new Image();
-      ctx.fillStyle = 'rgb(200,0,0)';
+      var clip_img = new Image();
+      ctx.fillStyle = 'rgba(255,255,255,0.01)';
+
+      ctx.beginPath();
       if (side == 'left') {
-        ctx.rect(0, 0, width / 2, height);
+        ctx.moveTo(0, 0);
+        // add one pixel to ensure there is no gap between the two canvas
+        var center = (width / 2) + 1;
       } else {
-        ctx.rect(width / 2, 0, width / 2, height);
+        ctx.moveTo(width, 0);
+        var center = (width / 2) - 1;
       }
+
+      ctx.lineTo(width / 2, 0);
+
+      // Draw a wavy pattern down the center
+      var step = 40;
+      var count = parseInt(height / step);
+      for (var i = 0; i < count; i++) {
+        ctx.lineTo(center, i * step);
+
+        // alternate curve control point 20 pixels, every other time
+        ctx.quadraticCurveTo((i % 2) ? center - 20 :
+          center + 20, i * step + step * 0.5, center, (i + 1) * step);
+      }
+      ctx.lineTo(center, height);
+      if (side == 'left') {
+        ctx.lineTo(0, height);
+        ctx.lineTo(0, 0);
+      } else {
+        ctx.lineTo(width, height);
+        ctx.lineTo(width, 0);
+      }
+
+      ctx.closePath();
+      ctx.fill();
       ctx.clip();
+
       img.onload = function() {
         var h = width * img.height / img.width;
         ctx.drawImage(img, 0, 0, width, h);
@@ -130,12 +213,27 @@ define(function(require) {
 
   function open_setting() {
     cover.classList.add('open');
+    bottom.classList.add('move-out');
     setting_is_open = true;
+    left_cover.style.transform = 'translateX(-40%)';
+    right_cover.style.transform = 'translateX(40%)';
   }
 
   function close_setting() {
     cover.classList.remove('open');
+    bottom.classList.remove('move-out');
     setting_is_open = false;
+    left_cover.style.transform = 'translateX(0)';
+    right_cover.style.transform = 'translateX(0)';
+  }
+
+  function slide_setting_to(x) {
+    var new_pos = left_cover.style.left - x;
+    // user can move image up to 20px in the wrong direction
+    if (new_pos < 20 && new_pos > -width && x < width / 2 - width * 0.05) {
+      left_cover.style.transform = 'translateX(' + (-x) + 'px)';
+      right_cover.style.transform = 'translateX(' + x + 'px)';
+    }
   }
 
 });

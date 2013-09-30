@@ -13,25 +13,21 @@
     <div id="cover">
       <div id="left-cover" class="cover-half"><canvas id="left-canvas"></canvas></div>
       <div id="setting">
-        <x-layout>
-          <header>
-            Settings
-          </header>
-          <section>
-            <p>
-            Quality: 
-            <x-togglegroup name="quality" group="quality">
-              <x-toggle label="Low"></x-toggle>
-              <x-toggle label="Medium"></x-toggle>
-              <x-toggle label="High"></x-toggle>
-            </x-togglegroup>
-            </p>
-            <p>
-              <x-toggle checked label="Play music when app starts"></x-toggle>
-            </p>
-          </section>
-        </x-layout>
-
+        <span class="setting-item"> 
+          <p>Stream quality:</p>
+          <x-togglegroup name="quality" group="quality">
+            <x-toggle class="custom-style" label="Low [32k]"></x-toggle>
+            <x-toggle class="custom-style" label="Medium [96k]"></x-toggle>
+            <x-toggle class="custom-style" label="High [192k]"></x-toggle>
+          </x-togglegroup>
+        </span>
+        <span class="setting-item">
+            <x-toggle checked label="Play music on start"></x-toggle>
+        </span>
+        <div class="about">
+          <p>With permission from <a href="http://www.radioparadise.com/ios-content.php" target="_blank">Radio Paradise</a>, this player is brought to you by <a href="http://arasbm.com" target="_blank">Aras</a>
+          </p>
+        </div>
       </div>
       <div id="right-cover" class="cover-half"><canvas id="right-canvas"></canvas></div>
     </div>

@@ -4,6 +4,9 @@ require.config({
       'helper/async_storage': {
         exports: 'asyncStorage'
       },
+      'helper/gesture_detector': {
+        exports: 'gesture'
+      },
       'helper/brick': {
         exports: 'brick'
       }
