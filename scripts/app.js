@@ -16,6 +16,10 @@ define(function(require) {
   var left_cover = document.getElementById('left-cover');
   var right_cover = document.getElementById('right-cover');
   var bottom = document.getElementById('bottom-div');
+  var q_toggle = document.getElementById('quality-toggle');
+  var low_q = document.getElementById('low');
+  var medium_q = document.getElementById('medium');
+  var high_q = document.getElementById('high');
   var last_pan_x = -1;
   var width, height;
   var next_song;
@@ -24,11 +28,9 @@ define(function(require) {
     '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
     '192k': 'http://stream-dv1.radioparadise.com/ogg-192'
   };
-
   var state = 'playing';
   var setting_is_open = false;
 
-  console.log('document ready? ' + document.readyState);
   if (document.readyState == 'complete') {
     init();
   } else {
@@ -36,15 +38,32 @@ define(function(require) {
   }
 
   function init() {
-    audio.src = ogg_stream['192k'];
-    new GestureDetector(cover).startDetecting();
+    set_quality();
     get_current_songinfo();
+    new GestureDetector(cover).startDetecting();
+  }
+
+  // Accepts 'low', 'medium', or 'high'
+  // if no argument is provided, will set to default
+  function set_quality(quality) {
+    switch (quality || setting.quality) {
+      case 'high':
+        audio.src = ogg_stream['192k'];
+        high_q.checked = true;
+        break;
+      case 'medium':
+        audio.src = ogg_stream['96k'];
+        medium_q.checked = true;
+        break;
+      case 'low':
+        audio.src = ogg_stream['32k'];
+        low_q.checked = true;
+        break;
+    }
+    console.log('set audio quality to ' + (quality || setting.quality));
   }
 
   btn.addEventListener('click', pause_play, false);
-  //cover.addEventListener('click', cover_tapped, false);
-  //left_canvas.addEventListener('click', cover_tapped, false);
-  //right_canvas.addEventListener('click', cover_tapped, false);
   audio.addEventListener('loadedmetadata', loadedMetadata, false);
   cover.addEventListener('pan', function(event) {
     event.stopPropagation();
@@ -85,13 +104,28 @@ define(function(require) {
     last_pan_x = -1;
   });
 
+  low_q.addEventListener('click', function() {
+    set_quality('low');
+  });
+
+  medium_q.addEventListener('click', function() {
+    set_quality('medium');
+  });
+
+  high_q.addEventListener('click', function() {
+    set_quality('high');
+  });
+
   window.addEventListener('resize', function() {
     update_info();
   }, false);
 
   function loadedMetadata() {
-    console.log('loaded metadata: ', this);
     audio.play();
+  }
+
+  function toggle_quality(event) {
+    console.log('toggled: ', event);
   }
 
   function pause_play() {
@@ -200,15 +234,6 @@ define(function(require) {
       };
       img.src = img_src;
     }
-  }
-
-  function cover_tapped() {
-    if (setting_is_open) {
-      close_setting();
-    } else {
-      open_setting();
-    }
-    console.log('toggled setting');
   }
 
   function open_setting() {
