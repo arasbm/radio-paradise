@@ -1,17 +1,34 @@
-define(function(require) {
-  var storage = require('helper/async_storage');
-  console.log('defining setting module, storage helper is' + storage);
-
-  // TODO: load stored setting object first,
-  // if does not exist create one with default values
+define(['helper/async_storage'], function(asyncStorage) {
   var setting = {
-    quality: 'high',
-    play_on_start: false,
-    prevent_lock: false,
-    stream_type: 'ogg'
+    values: {
+      quality: 'high',
+      play_on_start: false,
+      prevent_lock: false,
+      stream_type: 'ogg'
+    },
+    get_quality: function() {
+      return setting.values.quality;
+    },
+    set_quality: function(q) {
+      setting.values.quality = q;
+      setting.save();
+    },
+    get_play_on_start: function() {
+      return setting.values.play_on_start;
+    },
+    set_play_on_start: function(p) {
+      setting.values.play_on_start = p;
+      setting.save();
+    },
+    save: function() {
+      asyncStorage.setItem('setting', setting.values);
+    },
+    load: function(callback) {
+      asyncStorage.getItem('setting', function(values_obj) {
+        if (values_obj) setting.values = values_obj;
+        callback();
+      });
+    }
   };
-
-
   return setting;
 });
-

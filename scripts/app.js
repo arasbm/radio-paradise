@@ -1,9 +1,5 @@
-define(function(require) {
-  var setting = require('helper/setting');
-  var gesture = require('helper/gesture_detector');
-  //var brick = require('brick');
-  //var brick = require('helper/brick');
-
+define(['helper/setting', 'helper/gesture_detector'],
+function(setting, gesture) {
   var audio = document.getElementById('audio');
   var btn = document.getElementById('play-btn');
   var btn_img = document.getElementById('play-btn-img');
@@ -16,10 +12,10 @@ define(function(require) {
   var left_cover = document.getElementById('left-cover');
   var right_cover = document.getElementById('right-cover');
   var bottom = document.getElementById('bottom-div');
-  var q_toggle = document.getElementById('quality-toggle');
   var low_q = document.getElementById('low');
   var medium_q = document.getElementById('medium');
   var high_q = document.getElementById('high');
+  var play_start = document.getElementById('play-on-start');
   var last_pan_x = -1;
   var width, height;
   var next_song;
@@ -28,7 +24,7 @@ define(function(require) {
     '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
     '192k': 'http://stream-dv1.radioparadise.com/ogg-192'
   };
-  var state = 'playing';
+  var state = 'paused';
   var setting_is_open = false;
 
   if (document.readyState == 'complete') {
@@ -38,15 +34,22 @@ define(function(require) {
   }
 
   function init() {
-    set_quality();
-    get_current_songinfo();
+    setting.load(function() {
+      get_current_songinfo();
+      set_quality();
+      play_start.checked = setting.get_play_on_start();
+    });
+
     new GestureDetector(cover).startDetecting();
   }
 
   // Accepts 'low', 'medium', or 'high'
   // if no argument is provided, will set to default
   function set_quality(quality) {
-    switch (quality || setting.quality) {
+    if (quality) {
+      setting.set_quality(quality);
+    }
+    switch (setting.get_quality()) {
       case 'high':
         audio.src = ogg_stream['192k'];
         high_q.checked = true;
@@ -60,11 +63,11 @@ define(function(require) {
         low_q.checked = true;
         break;
     }
-    console.log('set audio quality to ' + (quality || setting.quality));
+    console.log('set audio quality to ' + setting.get_quality());
   }
 
   btn.addEventListener('click', pause_play, false);
-  audio.addEventListener('loadedmetadata', loadedMetadata, false);
+  audio.addEventListener('loadedmetadata', loaded_metadata, false);
   cover.addEventListener('pan', function(event) {
     event.stopPropagation();
     var position = event.detail.position;
@@ -105,41 +108,54 @@ define(function(require) {
   });
 
   low_q.addEventListener('click', function() {
+    console.log('low_q fired');
     set_quality('low');
   });
 
   medium_q.addEventListener('click', function() {
+    console.log('medium_q fired');
     set_quality('medium');
   });
 
   high_q.addEventListener('click', function() {
+    console.log('high_q fired');
     set_quality('high');
+  });
+
+  play_start.addEventListener('click', function() {
+    setting.set_play_on_start(play_start.checked);
   });
 
   window.addEventListener('resize', function() {
     update_info();
   }, false);
 
-  function loadedMetadata() {
-    audio.play();
+  function loaded_metadata() {
+    if (setting.get_play_on_start()) {
+      play();
+    }
   }
 
   function toggle_quality(event) {
     console.log('toggled: ', event);
   }
 
+  function play() {
+    audio.play();
+    state = 'playing';
+    btn.classList.remove('paused');
+    btn.classList.add('playing');
+  }
+
+  function pause() {
+    audio.pause();
+    state = 'paused';
+    btn.classList.add('paused');
+    btn.classList.remove('playing');
+  }
+
   function pause_play() {
-    if (state == 'paused') {
-      audio.play();
-      state = 'playing';
-      btn.classList.remove('paused');
-      btn.classList.add('playing');
-    } else {
-      audio.pause();
-      state = 'paused';
-      btn.classList.add('paused');
-      btn.classList.remove('playing');
-    }
+    (state == 'paused') ? play() : pause();
   }
 
   function get_current_songinfo() {
@@ -260,5 +276,4 @@ define(function(require) {
       right_cover.style.transform = 'translateX(' + x + 'px)';
     }
   }
-
 });

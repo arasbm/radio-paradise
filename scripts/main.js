@@ -7,6 +7,9 @@ require.config({
       'helper/gesture_detector': {
         exports: 'gesture'
       },
+      'helper/setting': {
+        exports: 'setting'
+      },
       'helper/brick': {
         exports: 'brick'
       }
