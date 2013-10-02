@@ -6,7 +6,7 @@
     "type": "privileged",
     "fullscreen": "false",
     "icons": {
-        "48": "/img/rp_logo32.png",
+        "32": "/img/rp_logo32.png",
         "60": "/img/rp_logo60.png",
         "64": "/img/rp_logo64.png",
         "128": "/img/rp_logo128.png"

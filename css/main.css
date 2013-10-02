@@ -80,7 +80,7 @@ div#play-btn.playing {
   background-color: rgba(0,255,0,0.8);
 }
 
-div#play-btn.paused {
+div#play-btn.stop {
   transform: rotate(540deg);
   border-color: rgba(255,0,0,0.8);
   background-color: rgba(255,0,0,0.8);

@@ -24,7 +24,7 @@ function(setting, gesture) {
     '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
     '192k': 'http://stream-dv1.radioparadise.com/ogg-192'
   };
-  var state = 'paused';
+  var state = 'stop';
   var setting_is_open = false;
 
   if (document.readyState == 'complete') {
@@ -63,10 +63,9 @@ function(setting, gesture) {
         low_q.checked = true;
         break;
     }
-    console.log('set audio quality to ' + setting.get_quality());
   }
 
-  btn.addEventListener('click', pause_play, false);
+  btn.addEventListener('click', stop_play, false);
   audio.addEventListener('loadedmetadata', loaded_metadata, false);
   cover.addEventListener('pan', function(event) {
     event.stopPropagation();
@@ -108,18 +107,21 @@ function(setting, gesture) {
   });
 
   low_q.addEventListener('click', function() {
-    console.log('low_q fired');
+    stop();
     set_quality('low');
+    play();
   });
 
   medium_q.addEventListener('click', function() {
-    console.log('medium_q fired');
+    stop();
     set_quality('medium');
+    play();
   });
 
   high_q.addEventListener('click', function() {
-    console.log('high_q fired');
+    stop();
     set_quality('high');
+    play();
   });
 
   play_start.addEventListener('click', function() {
@@ -136,26 +138,23 @@ function(setting, gesture) {
     }
   }
 
-  function toggle_quality(event) {
-    console.log('toggled: ', event);
-  }
-
   function play() {
     audio.play();
     state = 'playing';
-    btn.classList.remove('paused');
+    btn.classList.remove('stop');
     btn.classList.add('playing');
   }
 
-  function pause() {
+  function stop() {
     audio.pause();
-    state = 'paused';
-    btn.classList.add('paused');
+    state = 'stop';
+    btn.classList.add('stop');
     btn.classList.remove('playing');
   }
 
-  function pause_play() {
-    (state == 'paused') ? play() : pause();
+  // toggle between play and stop state
+  function stop_play() {
+    (state == 'stop') ? play() : stop();
   }
 
   function get_current_songinfo() {
