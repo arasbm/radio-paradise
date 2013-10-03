@@ -25,7 +25,11 @@ define(['helper/async_storage'], function(asyncStorage) {
     },
     load: function(callback) {
       asyncStorage.getItem('setting', function(values_obj) {
-        if (values_obj) setting.values = values_obj;
+        if (values_obj) {
+          setting.values = values_obj;
+        } else {
+          setting.save();
+        }
         callback();
       });
     }

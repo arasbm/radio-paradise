@@ -19,6 +19,7 @@ function(setting, gesture) {
   var last_pan_x = -1;
   var width, height;
   var next_song;
+  var initialized = false;
   var ogg_stream = {
     '32k': 'http://stream-dv1.radioparadise.com/ogg-192',
     '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
@@ -32,15 +33,24 @@ function(setting, gesture) {
   } else {
     document.addEventListener('DOMContentLoaded', init);
   }
+  // XXX -- sometime the above does not work
+  // if things did not start after 3 seconds give another push
+  setTimeout(function() {
+    if (!initialized) init();
+  }, 3000);
 
   function init() {
+    // First set quality to default so we can get started playing
+    set_quality();
     setting.load(function() {
-      get_current_songinfo();
       set_quality();
       play_start.checked = setting.get_play_on_start();
     });
 
+    get_current_songinfo();
+
     new GestureDetector(cover).startDetecting();
+    initialized = true;
   }
 
   // Accepts 'low', 'medium', or 'high'
@@ -65,8 +75,8 @@ function(setting, gesture) {
     }
   }
 
-  btn.addEventListener('click', stop_play, false);
-  audio.addEventListener('loadedmetadata', loaded_metadata, false);
+  btn.addEventListener('click', stop_play);
+  audio.addEventListener('loadedmetadata', loaded_metadata);
   cover.addEventListener('pan', function(event) {
     event.stopPropagation();
     var position = event.detail.position;
@@ -170,8 +180,8 @@ function(setting, gesture) {
       update_info();
     };
     crossxhr.onerror = function() {
-      console.log('Error getting current song info', crossxhr);
-      nex_song = setInterval(get_current_singinfo, 200000);
+      console.log('Radio Paradise: Error getting current song info', crossxhr);
+      nex_song = setInterval(get_current_singinfo, 20000);
     };
     crossxhr.open('GET', playlist_url);
     crossxhr.send();
