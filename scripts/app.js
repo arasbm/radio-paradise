@@ -7,7 +7,6 @@ function(setting, gesture) {
   var last_pan_x = -1;
   var width, height;
   var img_src, title;
-  var next_song;
   var initialized = false;
 
   var high_stream = [
@@ -65,8 +64,7 @@ function(setting, gesture) {
 
   function init() {
     audio = new Audio();
-    //audio.preload = true;
-    //audio.mozaudiochannel = 'content';
+    audio.preload = 'auto';
     audio.mozAudioChannelType = 'content';
     console.log('RP§ Can I play OGG? ', audio.canPlayType('audio/ogg'));
     console.log('RP§ Can I play mp3? ', audio.canPlayType('audio/mp3'));
@@ -227,8 +225,6 @@ function(setting, gesture) {
   }
 
   function play() {
-    console.log('RP: attempted to play()', audio.src);
-
     audio.play();
     state = 'playing';
     btn.classList.remove('stop');
@@ -236,9 +232,7 @@ function(setting, gesture) {
   }
 
   function stop() {
-    console.log('RP§ attempted stop()', audio.src);
     audio.pause();
-    //audio.currentTime = 0;
     state = 'stop';
     btn.classList.add('stop');
     btn.classList.remove('playing');
@@ -258,16 +252,15 @@ function(setting, gesture) {
     crossxhr.onload = function() {
       var infoArray = crossxhr.responseText.split('|');
       song_info.innerHTML = infoArray[1];
-      next_song = setInterval(get_current_songinfo, infoArray[0]);
+      setTimeout(get_current_songinfo, infoArray[0]);
       update_info();
     };
     crossxhr.onerror = function() {
       console.log('Radio Paradise: Error getting current song info', crossxhr);
-      next_song = setInterval(get_current_singinfo, 20000);
+      setTimeout(get_current_singinfo, 10000);
     };
     crossxhr.open('GET', playlist_url);
     crossxhr.send();
-    clearInterval(next_song);
   }
 
   function show_loading() {
@@ -287,6 +280,11 @@ function(setting, gesture) {
     // The HTML response has a duplicate element id for title,
     // so this is a workaround to access title
     title = document.querySelector('a > b').innerHTML;
+
+    // sometime info we get from server are corrupt and result in undefined
+    if (title == undefined || img_src == undefined) {
+      setTimeout(get_current_songinfo, 10000);
+    }
 
     cover.classList.remove('playing');
     setTimeout(function() {
