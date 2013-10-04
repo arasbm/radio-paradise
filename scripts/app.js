@@ -1,32 +1,55 @@
 define(['helper/setting', 'helper/gesture_detector'],
 function(setting, gesture) {
-  var audio = document.getElementById('audio');
-  var btn = document.getElementById('play-btn');
-  var btn_img = document.getElementById('play-btn-img');
-  var body = document.getElementsByTagName('body')[0];
-  var cover = document.getElementById('cover');
-  var title_el = document.getElementById('song-title');
-  var lock = window.navigator.requestWakeLock('screen');
-  var left_canvas = document.getElementById('left-canvas');
-  var right_canvas = document.getElementById('right-canvas');
-  var left_cover = document.getElementById('left-cover');
-  var right_cover = document.getElementById('right-cover');
-  var bottom = document.getElementById('bottom-div');
-  var low_q = document.getElementById('low');
-  var medium_q = document.getElementById('medium');
-  var high_q = document.getElementById('high');
-  var play_start = document.getElementById('play-on-start');
+  var audio, btn, btn_img, body, cover, title_el, lock, left_canvas,
+    right_canvas, left_cover, right_cover, bottom, low_q, medium_q,
+    high_q, play_start;
+
   var last_pan_x = -1;
   var width, height;
+  var img_src, title;
   var next_song;
   var initialized = false;
-  var ogg_stream = {
-    '32k': 'http://stream-dv1.radioparadise.com/ogg-192',
-    '96k': 'http://stream-dv1.radioparadise.com/ogg-192',
-    '192k': 'http://stream-dv1.radioparadise.com/ogg-192'
-  };
+
+  var high_stream = [
+    'http://stream-tx2.radioparadise.com/ogg-192',
+    'http://stream-tx3.radioparadise.com/ogg-192',
+    'http://stream-tx4.radioparadise.com/ogg-192',
+    'http://stream-tx1.radioparadise.com:80/mp3-192',
+    'http://stream-tx4.radioparadise.com:80/mp3-192',
+    'http://stream-tx1.radioparadise.com:80/aac-128',
+    'http://stream-uk1.radioparadise.com:80/aac-128',
+    'http://scfire-m26.websys.aol.com:80/radio_paradise_mp3_128kbps',
+    'http://scfire-d15.websys.aol.com:80/radio_paradise_mp3_128kbps',
+    'http://scfire-n15.websys.aol.com:80/radio_paradise_mp3_128kbps',
+    'http://scfire-a78.websys.aol.com:80/radio_paradise_mp3_128kbps',
+    'http://scfire-a32.websys.aol.com:80/radio_paradise_mp3_128kbps'
+  ];
+  var high_index = 0;
+
+  var medium_stream = [
+    'http://stream-tx1.radioparadise.com/ogg-96',
+    'http://stream-tx2.radioparadise.com/ogg-96',
+    'http://stream-tx3.radioparadise.com/ogg-96',
+    'http://stream-tx4.radioparadise.com/ogg-96',
+    'http://stream-sd.radioparadise.com/rp_96m.ogg',
+    'http://scstr06.egslb.aol.com:8000/radio_paradise_mp3_64kbps'
+  ];
+  var medium_index = 0;
+
+  var low_stream = [
+    'http://stream-tx1.radioparadise.com:80/mp3-32',
+    'http://stream-tx4.radioparadise.com:80/mp3-32',
+    'http://stream-sd.radioparadise.com:80/mp3-32',
+    'http://stream-tx1.radioparadise.com/ogg-32',
+    'http://stream-tx2.radioparadise.com/ogg-32',
+    'http://stream-tx3.radioparadise.com/ogg-32',
+    'http://stream-tx4.radioparadise.com/ogg-32'
+  ];
+  var low_index = 0;
+
   var state = 'stop';
   var setting_is_open = false;
+  var can_play = false;
 
   if (document.readyState == 'complete') {
     init();
@@ -36,119 +59,176 @@ function(setting, gesture) {
   // XXX -- sometime the above does not work
   // if things did not start after 3 seconds give another push
   setTimeout(function() {
+    console.log('DOM state is ', document.readyState);
     if (!initialized) init();
-  }, 3000);
+  }, 1000);
 
   function init() {
-    // First set quality to default so we can get started playing
-    set_quality();
-    setting.load(function() {
-      set_quality();
-      play_start.checked = setting.get_play_on_start();
-    });
+    audio = new Audio();
+    //audio.preload = true;
+    //audio.mozaudiochannel = 'content';
+    audio.mozAudioChannelType = 'content';
+    console.log('RP§ Can I play OGG? ', audio.canPlayType('audio/ogg'));
+    console.log('RP§ Can I play mp3? ', audio.canPlayType('audio/mp3'));
 
-    get_current_songinfo();
+    btn = document.getElementById('play-btn');
+    btn_img = document.getElementById('play-btn-img');
+    body = document.getElementsByTagName('body')[0];
+    cover = document.getElementById('cover');
+    title_el = document.getElementById('song-title');
+    lock = window.navigator.requestWakeLock('screen');
+    left_canvas = document.getElementById('left-canvas');
+    right_canvas = document.getElementById('right-canvas');
+    left_cover = document.getElementById('left-cover');
+    right_cover = document.getElementById('right-cover');
+    bottom = document.getElementById('bottom-div');
+    low_q = document.getElementById('low');
+    medium_q = document.getElementById('medium');
+    high_q = document.getElementById('high');
+    play_start = document.getElementById('play-on-start');
+
+    setting.load(start);
 
     new GestureDetector(cover).startDetecting();
+    setup_event_listeners();
     initialized = true;
   }
 
-  // Accepts 'low', 'medium', or 'high'
-  // if no argument is provided, will set to default
+  function start() {
+    play_start.checked = setting.get_play_on_start();
+    set_quality('default');
+    if (setting.get_play_on_start()) {
+      play();
+    }
+    get_current_songinfo();
+  }
+
+  // Accepts 'default', 'low', 'medium', or 'high'
   function set_quality(quality) {
-    if (quality) {
+    can_play = false;
+    show_loading();
+
+    if (quality != 'default') {
       setting.set_quality(quality);
     }
     switch (setting.get_quality()) {
       case 'high':
-        audio.src = ogg_stream['192k'];
+        audio.src = high_stream[high_index];
         high_q.checked = true;
         break;
       case 'medium':
-        audio.src = ogg_stream['96k'];
+        audio.src = medium_stream[medium_index];
         medium_q.checked = true;
         break;
       case 'low':
-        audio.src = ogg_stream['32k'];
+        audio.src = low_stream[low_index];
         low_q.checked = true;
         break;
     }
   }
 
-  btn.addEventListener('click', stop_play);
-  audio.addEventListener('loadedmetadata', loaded_metadata);
-  cover.addEventListener('pan', function(event) {
-    event.stopPropagation();
-    var position = event.detail.position;
-    if (last_pan_x == -1) {
-      last_pan_x = position.clientX;
-    } else {
-      var direction = (last_pan_x > width / 2) ?
-          position.clientX - last_pan_x : last_pan_x - position.clientX;
-      slide_setting_to(direction);
-    }
-  });
+  function setup_event_listeners() {
+    btn.addEventListener('click', stop_play);
 
-  cover.addEventListener('swipe', function(event) {
-    var swipe_threshold = width / 10;
-    var to_right = event.detail.direction === 'right';
-    var distance = event.detail.dx;
-    var on_left = event.detail.start.clientX < width / 2;
-
-    if (Math.abs(distance) > swipe_threshold) {
-      // if swipe was on left side and toward right OR if it was on right
-      // side and toward left then close detail panel, otherwise open it
-      if (on_left != to_right) {
-        open_setting();
-      } else {
-        close_setting();
+    audio.addEventListener('canplay', function() {
+      if (!can_play) {
+        can_play = true;
+        show_btn_img();
       }
-    } else {
-      // not enough force to change, go back to current state
-      if (setting_is_open) {
-        open_setting();
-      } else {
-        close_setting();
+    });
+
+    audio.addEventListener('loadedmetadata', function() {
+      if (!can_play) {
+        can_play = true;
+        show_btn_img();
       }
-    }
+    });
 
-    event.stopPropagation();
-    last_pan_x = -1;
-  });
-
-  low_q.addEventListener('click', function() {
-    stop();
-    set_quality('low');
-    play();
-  });
-
-  medium_q.addEventListener('click', function() {
-    stop();
-    set_quality('medium');
-    play();
-  });
-
-  high_q.addEventListener('click', function() {
-    stop();
-    set_quality('high');
-    play();
-  });
-
-  play_start.addEventListener('click', function() {
-    setting.set_play_on_start(play_start.checked);
-  });
-
-  window.addEventListener('resize', function() {
-    update_info();
-  }, false);
-
-  function loaded_metadata() {
-    if (setting.get_play_on_start()) {
+    audio.addEventListener('error', function() {
+      console.log('RP: this stream caused an error: ', audio.src);
+      switch (setting.get_quality()) {
+        case 'low':
+          low_index = (low_index + 1) % low_stream.length;
+          set_quality('low');
+          break;
+        case 'medium':
+          medium_index = (medium_index + 1) % medium_stream.length;
+          set_quality('medium');
+          break;
+        case 'high':
+          high_index = (high_index + 1) % high_stream.length;
+          set_quality('high');
+          break;
+      }
       play();
-    }
+    });
+
+    cover.addEventListener('pan', function(event) {
+      event.stopPropagation();
+      var position = event.detail.position;
+      if (last_pan_x == -1) {
+        last_pan_x = position.clientX;
+      } else {
+        var direction = (last_pan_x > width / 2) ?
+            position.clientX - last_pan_x : last_pan_x - position.clientX;
+        slide_setting_to(direction);
+      }
+    });
+
+    cover.addEventListener('swipe', function(event) {
+      var swipe_threshold = width / 10;
+      var to_right = event.detail.direction === 'right';
+      var distance = event.detail.dx;
+      var on_left = event.detail.start.clientX < width / 2;
+
+      if (Math.abs(distance) > swipe_threshold) {
+        // if swipe was on left side and toward right OR if it was on right
+        // side and toward left then close detail panel, otherwise open it
+        if (on_left != to_right) {
+          open_setting();
+        } else {
+          close_setting();
+        }
+      } else {
+        // not enough force to change, go back to current state
+        if (setting_is_open) {
+          open_setting();
+        } else {
+          close_setting();
+        }
+      }
+
+      event.stopPropagation();
+      last_pan_x = -1;
+    });
+
+    low_q.addEventListener('click', function() {
+      set_quality('low');
+      play();
+    });
+
+    medium_q.addEventListener('click', function() {
+      set_quality('medium');
+      play();
+    });
+
+    high_q.addEventListener('click', function() {
+      set_quality('high');
+      play();
+    });
+
+    play_start.addEventListener('click', function() {
+      setting.set_play_on_start(play_start.checked);
+    });
+
+    window.addEventListener('resize', function() {
+      update_info();
+    }, false);
   }
 
   function play() {
+    console.log('RP: attempted to play()', audio.src);
+
     audio.play();
     state = 'playing';
     btn.classList.remove('stop');
@@ -156,7 +236,9 @@ function(setting, gesture) {
   }
 
   function stop() {
+    console.log('RP§ attempted stop()', audio.src);
     audio.pause();
+    //audio.currentTime = 0;
     state = 'stop';
     btn.classList.add('stop');
     btn.classList.remove('playing');
@@ -181,28 +263,42 @@ function(setting, gesture) {
     };
     crossxhr.onerror = function() {
       console.log('Radio Paradise: Error getting current song info', crossxhr);
-      nex_song = setInterval(get_current_singinfo, 20000);
+      next_song = setInterval(get_current_singinfo, 20000);
     };
     crossxhr.open('GET', playlist_url);
     crossxhr.send();
     clearInterval(next_song);
   }
 
+  function show_loading() {
+    btn_img.src = 'img/loading.gif';
+    title_el.innerHTML = 'Loading | make sure you are connected to Internet';
+  }
+
+  // shows button image and song title text
+  function show_btn_img() {
+    btn_img.src = img_src;
+    title_el.innerHTML = title;
+  }
+
   function update_info() {
-    var img_src = document.querySelector('img.cover_art').src;
+    img_src = document.querySelector('img.cover_art').src;
 
     // The HTML response has a duplicate element id for title,
     // so this is a workaround to access title
-    var title = document.querySelector('a > b').innerHTML;
+    title = document.querySelector('a > b').innerHTML;
+
     cover.classList.remove('playing');
     setTimeout(function() {
-
-      //>cover_left.src = img;
       draw(img_src);
       cover.classList.add('playing');
     }, 1500);
-    btn_img.src = img_src;
-    title_el.innerHTML = title;
+
+    if (can_play || (state == 'stop')) {
+      show_btn_img();
+    } else {
+      show_loading();
+    }
   }
 
   function draw(img_src) {
