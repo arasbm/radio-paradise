@@ -66,8 +66,6 @@ function(setting, gesture) {
     audio = new Audio();
     audio.preload = 'auto';
     audio.mozAudioChannelType = 'content';
-    console.log('RP§ Can I play OGG? ', audio.canPlayType('audio/ogg'));
-    console.log('RP§ Can I play mp3? ', audio.canPlayType('audio/mp3'));
 
     btn = document.getElementById('play-btn');
     btn_img = document.getElementById('play-btn-img');

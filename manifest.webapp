@@ -3,6 +3,8 @@
     "name": "Radio Paradise",
     "launch_path": "/index.html",
     "description": "An unofficial app for radio paradise",
+    "fullscreen": "false",
+    "orientation": ["portrait", "landscape"],
     "type": "privileged",
     "icons": {
         "32": "/img/rp_logo32.png",
