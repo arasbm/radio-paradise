@@ -255,7 +255,7 @@ function(setting, gesture) {
     };
     crossxhr.onerror = function() {
       console.log('Radio Paradise: Error getting current song info', crossxhr);
-      setTimeout(get_current_singinfo, 10000);
+      setTimeout(get_current_songinfo, 10000);
     };
     crossxhr.open('GET', playlist_url);
     crossxhr.send();
